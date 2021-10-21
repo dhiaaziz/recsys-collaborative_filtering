@@ -90,8 +90,8 @@ print(filedir)
 #       user67|user25452|0.563|3
 # ==============================
 
-# correlation_data = []
-correlation_df = pd.DataFrame(columns=['user_id', 'user_neighbor_id', 'correlation_coefficient', 'rank'])
+correlation_data_collection = []
+# correlation_df = pd.DataFrame(columns=['user_id', 'user_neighbor_id', 'correlation_coefficient', 'rank'])
 # df_temp = pd.DataFrame(data=[[1,1,1,1]], columns=['user_id', 'user_neighbor_id', 'correlation_coefficient', 'rank'])
 # correlation_data = correlation_data.append(df_temp, ignore_index=True)
 # correlation_data.append([])
@@ -112,9 +112,10 @@ for i in tableFiltered.index:
         corr = series1.corr(series2, method='pearson')
         # correlation_data.append(corr)
         corr_data = {'user_id': i, 'user_neighbor_id': j, 'correlation_coefficient': corr}
-        correlation_df = correlation_df.append(corr_data, ignore_index=True)
+        # correlation_df = correlation_df.append(corr_data, ignore_index=True)
+        correlation_data_collection.append(corr_data)
         
-
+correlation_df = pd.DataFrame(correlation_data_collection)
 
 
     
