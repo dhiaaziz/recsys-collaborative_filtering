@@ -13,7 +13,7 @@ import os
 
 # import json
 
-ratings_df = pd.read_json("./top10cat_balanced.json", lines=True)
+ratings_df = pd.read_json("./datasets/top10cat_balanced.json", lines=True)
 # ratings_df = pd.DataFrame("./data_fix.json", lines=False)
 
 ratings_df.head(n=10)
@@ -34,7 +34,7 @@ ratings_df_filtered['review_valueformoney'].replace(['expensive','just right','c
 
     
 # print(type(ratings_df_filtered))
-user_ids = set(ratings_df_filtered.user_id)
+user_ids_all = set(ratings_df_filtered.user_id)
 product_ids = set(ratings_df_filtered.product_id)
 review_ids = set(ratings_df_filtered.review_id)
 
@@ -53,17 +53,21 @@ tableFiltered = tableFiltered.astype(int)
 
 
 path = os.getcwd()
-filedir = path+'/data.csv' # user-row
+filedir = path+'/outputs/data.csv' # user-row
 # pd.to_numeric(tableFiltered)
 tableFiltered.to_csv(filedir, index=True, sep=';')
 
 tableFilteredTrans = tableFiltered.T
-filedir = path+'/data_transposed.csv' # product-row
+filedir = path+'/outputs/data_transposed.csv' # product-row
 tableFilteredTrans.to_csv(filedir, index=True, sep=';')
 
 print(filedir)
 
-
+# series1 = tableFiltered.loc[21]
+# series = tableFiltered.iloc[21]
+# series2 = tableFilteredTrans[21].squeeze()
+# series3 = tableFilteredTrans.loc[:,21]
+# 
 # ==============================
 # Step 1 - Calculate Correlation
 #   desc:
@@ -82,7 +86,38 @@ print(filedir)
 #       user67|user25452|0.563|3
 # ==============================
 
+# correlation_data = []
+correlation_df = pd.DataFrame(columns=['user_id', 'user_neighbor_id', 'correlation_coefficient', 'rank'])
+# df_temp = pd.DataFrame(data=[[1,1,1,1]], columns=['user_id', 'user_neighbor_id', 'correlation_coefficient', 'rank'])
+# correlation_data = correlation_data.append(df_temp, ignore_index=True)
+# correlation_data.append([])
 
+for i in tableFiltered.index:
+    
+    # for experiment purpose, get only 5 users
+    if (i >= 1000):
+        break
+    
+    print(f'Processing User {i}')
+    series1 = tableFiltered.loc[i] 
+    #iterasi sejumlah user id
+    for j in tableFiltered.index:
+        if j == i:
+            continue
+        series2 = tableFilteredTrans.loc[:,j]
+        corr = series1.corr(series2, method='pearson')
+        # correlation_data.append(corr)
+        corr_data = {'user_id': i, 'user_neighbor_id': j, 'correlation_coefficient': corr}
+        correlation_df = correlation_df.append(corr_data, ignore_index=True)
+        
+
+
+
+    
+correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coefficient'].rank(ascending=False)
+
+
+# correlationn = tableFiltered.corr(method='pearson')
 
 # ==============================
 # Step 2 - Populasi Rating Neighbor
@@ -105,6 +140,46 @@ print(filedir)
 #       user750|user76272|3|product_3|4
 # ==============================
 
+print('Neighbor\'s Rating')
+N = 30 #neighbor count
+correlation_df_filtered = correlation_df[correlation_df['rank'] <= 30]
+
+correlation_df_filtered = correlation_df_filtered.reset_index()
+correlation_df_filtered = correlation_df_filtered.drop(columns = ['index'])
+correlation_df_filtered['user_id'] = correlation_df_filtered['user_id'].astype(int)
+correlation_df_filtered['user_neighbor_id'] = correlation_df_filtered['user_neighbor_id'].astype(int)
+correlation_df_filtered['rank'] = correlation_df_filtered['rank'].astype(int)
+
+
+
+user_ids = sorted(set(correlation_df_filtered.user_id))
+
+
+
+# neighbor_rating_df = pd.DataFrame(columns=['user_id', 'user_neighbor_id', 'rank', 'product_id', 'neighbor_rating'])
+# for i in correlation_df_filtered.index:
+#     print(i)
+# for i in correlation_df_filtered:
+#     print(i)
+neighbor_rating_collection = []
+for user_id in user_ids:
+    neighbor_per_user_df = correlation_df_filtered[correlation_df_filtered['user_id'] == user_id]
+    # neighbor_per_user_df = neighbor_per_user_df['']
+    for neighbor_id in neighbor_per_user_df['user_neighbor_id']:
+        print(f'Collecting Rating from User {user_id} and Neighbor {neighbor_id}')
+        rankValue = neighbor_per_user_df.loc[(neighbor_per_user_df.user_id == user_id) & (neighbor_per_user_df.user_neighbor_id == neighbor_id)]['rank']
+        rankValue = rankValue.item()
+        # neighbor_df = neighbor_per_user_df[neighbor_per_user_df['user_id'] == user_id]
+        # rankValue = neighbor_df[neighbor_df[]]
+        for product_id in product_ids:
+            neighbor_rating = tableFilteredTrans[user_id].loc[product_id] # tableFilteredTrans[column].loc[index]
+            neighbor_data = {'user_id': user_id, 'user_neighbor_id': neighbor_id, 'rank': rankValue , 'product_id': product_id, 'neighbor_rating': neighbor_rating}
+            neighbor_rating_collection.append(neighbor_data)
+neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
+        
+# print(tableFilteredTrans[21, 67])
+# oke = tableFilteredTrans[21]
+# oke2 = tableFilteredTrans[21].loc[89]
 
 
 # ==============================
