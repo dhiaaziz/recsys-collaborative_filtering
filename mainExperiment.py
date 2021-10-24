@@ -99,8 +99,8 @@ correlation_data_collection = []
 for i in tableFiltered.index:
     
     # for experiment purpose, get only 5 users
-    # if (i >= 1000):
-    #     break
+    if (i >= 30):
+        break
     
     print(f'Calculate Correlation for User {i}')
     series1 = tableFiltered.loc[i] 
@@ -147,7 +147,7 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 # ==============================
 
 print('Neighbor\'s Rating')
-N = 30 #neighbor count
+N = 5#neighbor count
 correlation_df_filtered = correlation_df[correlation_df['rank'] <= N]
 
 correlation_df_filtered = correlation_df_filtered.reset_index()
@@ -170,7 +170,7 @@ for user_id in user_ids:
         
         for product_id in product_ids:
             # print(f'product {product_id}')
-            neighbor_rating = tableFilteredTrans[user_id].loc[product_id] # tableFilteredTrans[column].loc[index]
+            neighbor_rating = tableFilteredTrans[neighbor_id].loc[product_id] # tableFilteredTrans[column].loc[index]
             neighbor_data = {'user_id': user_id, 'user_neighbor_id': neighbor_id, 'rank': rankValue , 'product_id': product_id, 'neighbor_rating': neighbor_rating}
             neighbor_rating_collection.append(neighbor_data)
             # neighbor_rating_df = neighbor_rating_df.append(neighbor_data, ignore_index=True)
@@ -198,7 +198,14 @@ neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
 #       user67|product_2|3.
 #       user67|product_3|4.
 # ==============================
-
+predicted_rating = []
+# print(neighbor_rating_df['rankValue'])
+saya = neighbor_rating_df[neighbor_rating_df['user_id'] < 1000]
+siapa = saya[saya['product_id'] == 99]
+ya = tableFilteredTrans[944].loc[126]
+# df_test = neighbor_rating_df[neighbor_rating_df['']]
+# for user_ in user_ids:
+    
 
 
 # ==============================
