@@ -43,7 +43,7 @@ review_ids = set(ratings_df_filtered.review_id)
 
 
 table = pd.pivot_table(ratings_df_filtered, index='user_id', columns='product_id', values='review_rating')
-cols_to_int = []
+# cols_to_int = []
 
 
 count= table.count(axis=1)
@@ -99,7 +99,7 @@ correlation_data_collection = []
 for i in tableFiltered.index:
     
     # for experiment purpose, get only 5 users
-    if (i >= 30):
+    if (i >= 1000):
         break
     
     print(f'Calculate Correlation for User {i}')
@@ -145,6 +145,7 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 #       user750|user8456|2|product_3|4
 #       user750|user76272|3|product_3|4
 # ==============================
+
 
 print('Neighbor\'s Rating')
 N = 5#neighbor count
@@ -198,14 +199,31 @@ neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
 #       user67|product_2|3.
 #       user67|product_3|4.
 # ==============================
-predicted_rating = []
+predicted_ratings = []
 # print(neighbor_rating_df['rankValue'])
-saya = neighbor_rating_df[neighbor_rating_df['user_id'] < 1000]
-siapa = saya[saya['product_id'] == 99]
-ya = tableFilteredTrans[944].loc[126]
-# df_test = neighbor_rating_df[neighbor_rating_df['']]
-# for user_ in user_ids:
+# saya = neighbor_rating_df[neighbor_rating_df['user_id'] < 1000]
+# siapa = saya[saya['product_id'] == 99]
+# ya = tableFilteredTrans[944].loc[126]
+
     
+for user_id in user_ids: 
+    print(f'Predict items rating for user: {user_id} ')
+    temp_user_df = neighbor_rating_df[neighbor_rating_df['user_id'] == user_id]
+    for product_id in sorted(product_ids, reverse=True):
+        # print(product_id)
+        temp_product_df = temp_user_df[temp_user_df['product_id'] == product_id]
+        rating_series = temp_product_df['neighbor_rating']
+        predicted_rating = rating_series.mean()
+        predicted_data = {'user_id': user_id, 'product_id': product_id, 'predicted_score': predicted_rating}
+        predicted_ratings.append(predicted_data)
+        
+
+predicted_rating_df = pd.DataFrame(predicted_ratings)
+
+
+#for development testing purpose => verify data with the results from the excel process
+verify_predicted_rating_df = predicted_rating_df[predicted_rating_df['user_id'] == 750]
+#verified
 
 
 # ==============================
