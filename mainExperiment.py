@@ -237,7 +237,20 @@ verify_predicted_rating_df = predicted_rating_df[predicted_rating_df['user_id'] 
 #   sample:
 #       0.140212
 # ==============================
+# for user_id in user_ids:
+   
+#for development testing purpose => verify data with the results from the excel process
+temp_user_error_df = predicted_rating_df[predicted_rating_df['user_id'] == 750].sort_values(by=['product_id'])
+temp_actual_rating_series = tableFiltered.loc[750].sort_index()
+# temp_actual_rating_series = temp_actual_rating_series.drop(columns=['product_id'])
+# temp_eh = temp_actual_rating_series.loc[:, 750]
+temp_predicted_rating_series = temp_user_error_df.loc[:,['product_id','predicted_score']].set_index('product_id')
+temp_predicted_rating_series = temp_predicted_rating_series.loc[:, 'predicted_score']
 
+#pengurangan series / matrix harus memiliki index yang sama
+temp_errors = temp_predicted_rating_series - temp_actual_rating_series
+temp_absolute_errors = temp_errors.abs()
+temp_mae = temp_absolute_errors.mean()
 
 
 print("--- %s seconds ---" % (time.time() - start_time))
