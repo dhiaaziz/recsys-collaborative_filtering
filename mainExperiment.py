@@ -9,6 +9,7 @@ Created on Sat Oct  2 16:24:16 2021
 import pandas as pd
 import numpy as np
 from numpy import int64
+import statistics
 import os
 import time
 start_time = time.time()
@@ -148,7 +149,7 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 
 
 print('Neighbor\'s Rating')
-N = 5#neighbor count
+N = 30#neighbor count
 correlation_df_filtered = correlation_df[correlation_df['rank'] <= N]
 
 correlation_df_filtered = correlation_df_filtered.reset_index()
@@ -237,20 +238,34 @@ verify_predicted_rating_df = predicted_rating_df[predicted_rating_df['user_id'] 
 #   sample:
 #       0.140212
 # ==============================
-# for user_id in user_ids:
+print("Calculating MAE")
+list_mae = []
+for user_id in user_ids:
+    temp_user_error_df = predicted_rating_df[predicted_rating_df['user_id'] == user_id].sort_values(by=['product_id'])
+    temp_actual_rating_series = tableFiltered.loc[user_id].sort_index()
+
+    temp_predicted_rating_series = temp_user_error_df.loc[:,['product_id','predicted_score']].set_index('product_id')
+    temp_predicted_rating_series = temp_predicted_rating_series.loc[:, 'predicted_score']
+
+    #pengurangan series / matrix harus memiliki index yang sama
+    temp_errors = temp_predicted_rating_series - temp_actual_rating_series
+    temp_absolute_errors = temp_errors.abs()
+    temp_mae = temp_absolute_errors.mean()
+    list_mae.append(temp_mae)
+    
+mean_absolute_error = statistics.mean(list_mae)
    
 #for development testing purpose => verify data with the results from the excel process
-temp_user_error_df = predicted_rating_df[predicted_rating_df['user_id'] == 750].sort_values(by=['product_id'])
-temp_actual_rating_series = tableFiltered.loc[750].sort_index()
-# temp_actual_rating_series = temp_actual_rating_series.drop(columns=['product_id'])
-# temp_eh = temp_actual_rating_series.loc[:, 750]
-temp_predicted_rating_series = temp_user_error_df.loc[:,['product_id','predicted_score']].set_index('product_id')
-temp_predicted_rating_series = temp_predicted_rating_series.loc[:, 'predicted_score']
+# verify_user_error_df = predicted_rating_df[predicted_rating_df['user_id'] == 750].sort_values(by=['product_id'])
+# verify_actual_rating_series = tableFiltered.loc[750].sort_index()
+
+# verify_predicted_rating_series = verify_user_error_df.loc[:,['product_id','predicted_score']].set_index('product_id')
+# verify_predicted_rating_series = verify_predicted_rating_series.loc[:, 'predicted_score']
 
 #pengurangan series / matrix harus memiliki index yang sama
-temp_errors = temp_predicted_rating_series - temp_actual_rating_series
-temp_absolute_errors = temp_errors.abs()
-temp_mae = temp_absolute_errors.mean()
+# verify_errors = verify_predicted_rating_series - verify_actual_rating_series
+# verify_absolute_errors = verify_errors.abs()
+# verify_mae = verify_absolute_errors.mean()
 
 
 print("--- %s seconds ---" % (time.time() - start_time))
