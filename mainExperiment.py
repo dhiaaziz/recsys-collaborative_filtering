@@ -14,63 +14,28 @@ import os
 import time
 start_time = time.time()
 
-
-# import json
-
-ratings_df = pd.read_json("./datasets/top10cat_balanced.json", lines=True)
-# ratings_df = pd.DataFrame("./data_fix.json", lines=False)
-
-ratings_df.head(n=10)
-
-ratings_df_filtered = ratings_df.copy(deep=True)
-ratings_df_filtered = ratings_df_filtered[['review_id','product_id','product_name','user_id','review_rating','review_packaging','review_rebuy','review_valueformoney']]
-ratings_df_filtered['review_rebuy'].replace(['yes','maybe', 'no'],['5','3','1'],inplace=True)
-ratings_df_filtered['review_valueformoney'].replace(['expensive','just right','cheap'],['1','3','5'],inplace=True)
-
-# display(ratings_df_filtered)
-
-
-# =============================================================================
-# for key,value in ratings_df_filtered.items():
-#     print (key)
-#     print(value)
-# =============================================================================
-
-    
-# print(type(ratings_df_filtered))
-user_ids_all = set(ratings_df_filtered.user_id)
-product_ids = set(ratings_df_filtered.product_id)
-review_ids = set(ratings_df_filtered.review_id)
-
-
-table = pd.pivot_table(ratings_df_filtered, index='user_id', columns='product_id', values='review_rating')
-# cols_to_int = []
-
-
-count= table.count(axis=1)
-countBool = table.count(axis=1) >= 5
-countTrue = countBool.sum()
-
-tableFiltered = table[table.count(axis=1) >= 5]
-tableFiltered = tableFiltered.fillna(0)
-tableFiltered = tableFiltered.astype(int)
-
-
 path = os.getcwd()
-filedir = path+'/outputs/data.csv' # user-row
-# pd.to_numeric(tableFiltered)
-tableFiltered.to_csv(filedir, index=True, sep=';')
+folder_dir = path + '/outputs/'
+train_file = folder_dir + 'train_set.csv'
+print(train_file)
+data_rating_df = pd.read_csv(train_file)
 
+user_ids_all = set(data_rating_df.user_id)
+product_ids = set(data_rating_df.product_id)
+
+
+table = pd.pivot_table(data_rating_df, index='user_id', columns='product_id', values='review_rating')
+# tableFiltered = table.copy(deep=True)
+tableFiltered = table.fillna(0)
+tableFiltered = tableFiltered.astype(int)
 tableFilteredTrans = tableFiltered.T
+
+#output for anylizing matrices
+filedir = path+'/outputs/data.csv' # user-row
+tableFiltered.to_csv(filedir, index=True, sep=';')
 filedir = path+'/outputs/data_transposed.csv' # product-row
 tableFilteredTrans.to_csv(filedir, index=True, sep=';')
 
-print(filedir)
-
-# series1 = tableFiltered.loc[21]
-# series = tableFiltered.iloc[21]
-# series2 = tableFilteredTrans[21].squeeze()
-# series3 = tableFilteredTrans.loc[:,21]
 
 
 # ==============================
@@ -100,8 +65,8 @@ correlation_data_collection = []
 for i in tableFiltered.index:
     
     # for experiment purpose, get only 5 users
-    if (i >= 1000):
-        break
+    # if (i >= 1000):
+    #     break
     
     print(f'Calculate Correlation for User {i}')
     series1 = tableFiltered.loc[i] 
@@ -130,10 +95,10 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 # Step 2 - Populasi Rating Neighbor
 #   desc:
 #       koleksi rating yang diberikan oleh 30 tetangga terdekat, dengan cara filter correlation_data kolom rank < 30
-# 
+
 #   output:
 #       neighbor_rating (pd.DataFrame) - user_id|user_neighbor_id|rank|product_id|neighbor_rating
-# 
+
 #   sample:
 #       user_id|user_neighbor_id|rank|product_id|neighbor_rating
 #       user750|user46657|1|product_1|0
@@ -149,7 +114,7 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 
 
 print('Neighbor\'s Rating')
-N = 30#neighbor count
+N = 5#neighbor count
 correlation_df_filtered = correlation_df[correlation_df['rank'] <= N]
 
 correlation_df_filtered = correlation_df_filtered.reset_index()
@@ -187,10 +152,10 @@ neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
 # Step 3 - Hitung Rekomendasi
 #   desc:
 #       hitung agregat rating dari semua neighbor
-# 
+
 #   output:
 #       predicted_rating (pd.DataFrame) - user_id|product_id|predicted_score
-# 
+
 #   sample:
 #       user_id|product_id|predicted_score
 #       user750|product_1|0.333
@@ -200,13 +165,28 @@ neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
 #       user67|product_2|3.
 #       user67|product_3|4.
 # ==============================
-predicted_ratings = []
-# print(neighbor_rating_df['rankValue'])
-# saya = neighbor_rating_df[neighbor_rating_df['user_id'] < 1000]
-# siapa = saya[saya['product_id'] == 99]
-# ya = tableFilteredTrans[944].loc[126]
+test_file = folder_dir + 'test_set.csv'
+test_set_df = pd.read_csv(test_file) 
 
+cobacoba = []
+list_mean = []
+start_time = time.time()
+for i in test_set_df.index:
+    print(i)
+    user_i_predict = test_set_df.iloc[i].user_id
+    product_i_predict = test_set_df.iloc[i].product_id
+    # user_predict_df = neighbor_rating_df[(neighbor_rating_df['user_id'] == user_i_predict) & (neighbor_rating_df['product_id'] ==  product_i_predict) ]
+    # user_predict_df = neighbor_rating_df.query('user_id == @user_i_predict & product_id == @product_i_predict' )
+    user_predict_df = neighbor_rating_df.loc[(neighbor_rating_df['user_id'] == user_i_predict) & (neighbor_rating_df['product_id'] ==  product_i_predict)]
+    predicted_rating = user_predict_df['neighbor_rating'].mean()
+    list_mean.append(predicted_rating)
+    # idx = np.where((neighbor_rating_df['user_id'] == user_i_predict) & (neighbor_rating_df['product_id'] == product_i_predict))
+    # user_predict_df = neighbor_rating_df.loc[idx]
+    # user_predict_df = neighbor_rating_df[neighbor_rating_df.eval("user_id == @user_i_predict & product_id == @product_i_predict")]
+test_set_df['predicted_rating'] = list_mean
+print("--- %s seconds ---" % (time.time() - start_time))
     
+predicted_ratings = []
 for user_id in user_ids: 
     print(f'Predict items rating for user: {user_id} ')
     temp_user_df = neighbor_rating_df[neighbor_rating_df['user_id'] == user_id]

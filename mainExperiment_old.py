@@ -52,10 +52,16 @@ count= table.count(axis=1)
 countBool = table.count(axis=1) >= 5
 countTrue = countBool.sum()
 
+
+
 tableFiltered = table[table.count(axis=1) >= 5]
+countColumn = tableFiltered.count(axis=0) >= 1
+countColumnTrue = countColumn.sum()
 tableFiltered = tableFiltered.fillna(0)
 tableFiltered = tableFiltered.astype(int)
 
+
+user_ids_filtered = set(tableFiltered.index)
 
 path = os.getcwd()
 filedir = path+'/outputs/data.csv' # user-row
@@ -221,16 +227,6 @@ for user_id in user_ids:
         
 
 predicted_rating_df = pd.DataFrame(predicted_ratings)
-
-
-
-predicted_rating_df.size 
-coba1, coba2, = predicted_rating_df.shape
-len(predicted_rating_df)
-n_sample = 20/100
-n_sample = int(n_sample * len(predicted_rating_df))
-# sampling = predicted_rating_df.sample(n = n_sample)
-sampling = predicted_rating_df.sample(frac = 0.5)
 
 
 #for development testing purpose => verify data with the results from the excel process
