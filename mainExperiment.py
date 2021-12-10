@@ -20,14 +20,33 @@ train_file = folder_dir + 'train_set.csv'
 print(train_file)
 data_rating_df = pd.read_csv(train_file)
 
+test_file = folder_dir + 'test_set.csv'
+test_set_df = pd.read_csv(test_file) 
+
+#train set ids
 user_ids_all = set(data_rating_df.user_id)
 product_ids = set(data_rating_df.product_id)
 
+#test set ids
+user_ids_test = set(test_set_df.user_id)
+product_ids_test = set(test_set_df.product_id)
+product_ids_onlytest = product_ids_test - product_ids
+product_ids_onlytest = sorted(product_ids_onlytest)
 
+product_additions = []
+# prod
+
+for product_id in product_ids_onlytest:
+    product_addition_data = {'user_id': -9999, 'product_id': product_id, 'review_rating': 0}
+    product_additions.append(product_addition_data)
+    data_rating_df.loc[len(data_rating_df)] = product_addition_data
+
+# product_ids = 
 table = pd.pivot_table(data_rating_df, index='user_id', columns='product_id', values='review_rating')
 # tableFiltered = table.copy(deep=True)
 tableFiltered = table.fillna(0)
 tableFiltered = tableFiltered.astype(int)
+tableFiltered.drop(index=[-9999])
 tableFilteredTrans = tableFiltered.T
 
 #output for anylizing matrices
@@ -65,8 +84,8 @@ correlation_data_collection = []
 for i in tableFiltered.index:
     
     # for experiment purpose, get only 5 users
-    # if (i >= 1000):
-    #     break
+    if (i >= 1000):
+        break
     
     print(f'Calculate Correlation for User {i}')
     series1 = tableFiltered.loc[i] 
@@ -114,7 +133,7 @@ correlation_df['rank'] = correlation_df.groupby('user_id')['correlation_coeffici
 
 
 print('Neighbor\'s Rating')
-N = 5#neighbor count
+N = 30 #neighbor count
 correlation_df_filtered = correlation_df[correlation_df['rank'] <= N]
 
 correlation_df_filtered = correlation_df_filtered.reset_index()
@@ -165,8 +184,7 @@ neighbor_rating_df = pd.DataFrame(neighbor_rating_collection)
 #       user67|product_2|3.
 #       user67|product_3|4.
 # ==============================
-test_file = folder_dir + 'test_set.csv'
-test_set_df = pd.read_csv(test_file) 
+
 
 cobacoba = []
 list_mean = []
